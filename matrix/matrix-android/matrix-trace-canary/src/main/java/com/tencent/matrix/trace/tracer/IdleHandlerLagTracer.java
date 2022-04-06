@@ -42,24 +42,34 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IdleHandlerLagTracer extends Tracer {
 
+public class IdleHandlerLagTracer extends Tracer {
     private static final String TAG = "Matrix.IdleHandlerLagTracer";
+
     private static TraceConfig traceConfig;
     private static HandlerThread idleHandlerLagHandlerThread;
     private static Handler idleHandlerLagHandler;
     private static Runnable idleHandlerLagRunnable;
 
+
     public IdleHandlerLagTracer(TraceConfig config) {
         traceConfig = config;
     }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
 
     @Override
     public void onAlive() {
         super.onAlive();
         if (traceConfig.isIdleHandlerTraceEnable()) {
             idleHandlerLagHandlerThread = new HandlerThread("IdleHandlerLagThread");
-            idleHandlerLagRunnable = new IdleHandlerLagRunable();
+            idleHandlerLagRunnable = new IdleHandlerLagRunnable();
             detectIdleHandler();
         }
     }
@@ -72,7 +82,15 @@ public class IdleHandlerLagTracer extends Tracer {
         }
     }
 
-    static class IdleHandlerLagRunable implements Runnable {
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    static class IdleHandlerLagRunnable implements Runnable {
         @Override
         public void run() {
             try {
@@ -97,25 +115,25 @@ public class IdleHandlerLagTracer extends Tracer {
                 issue.setContent(jsonObject);
                 plugin.onDetectIssue(issue);
                 MatrixLog.e(TAG, "happens idle handler Lag : %s ", jsonObject.toString());
-
-
             } catch (Throwable t) {
                 MatrixLog.e(TAG, "Matrix error, error = " + t.getMessage());
             }
-
         }
     }
+
 
     private static void detectIdleHandler() {
         try {
             if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
                 return;
             }
+
             MessageQueue mainQueue = Looper.getMainLooper().getQueue();
             Field field = MessageQueue.class.getDeclaredField("mIdleHandlers");
             field.setAccessible(true);
             MyArrayList<MessageQueue.IdleHandler> myIdleHandlerArrayList = new MyArrayList<>();
             field.set(mainQueue, myIdleHandlerArrayList);
+
             idleHandlerLagHandlerThread.start();
             idleHandlerLagHandler = new Handler(idleHandlerLagHandlerThread.getLooper());
         } catch (Throwable t) {
@@ -139,6 +157,7 @@ public class IdleHandlerLagTracer extends Tracer {
             return ret;
         }
     }
+
 
     static class MyArrayList<T> extends ArrayList {
         Map<MessageQueue.IdleHandler, MyIdleHandler> map = new HashMap<>();

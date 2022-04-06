@@ -44,9 +44,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class LooperAnrTracer extends Tracer {
 
+public class LooperAnrTracer extends Tracer {
     private static final String TAG = "Matrix.AnrTracer";
+
     private Handler anrHandler;
     private Handler lagHandler;
     private final TraceConfig traceConfig;
@@ -54,10 +55,19 @@ public class LooperAnrTracer extends Tracer {
     private final LagHandleTask lagTask = new LagHandleTask();
     private boolean isAnrTraceEnable;
 
+
     public LooperAnrTracer(TraceConfig traceConfig) {
         this.traceConfig = traceConfig;
         this.isAnrTraceEnable = traceConfig.isAnrTraceEnable();
     }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
 
     @Override
     public void onAlive() {
@@ -79,6 +89,19 @@ public class LooperAnrTracer extends Tracer {
             lagHandler.removeCallbacksAndMessages(null);
         }
     }
+
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    LooperObserver
+    //
 
     @Override
     public void dispatchBegin(long beginNs, long cpuBeginMs, long token) {
@@ -109,6 +132,14 @@ public class LooperAnrTracer extends Tracer {
         anrHandler.removeCallbacks(anrTask);
         lagHandler.removeCallbacks(lagTask);
     }
+
+    //
+    //    LooperObserver
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
 
     class LagHandleTask implements Runnable {
 

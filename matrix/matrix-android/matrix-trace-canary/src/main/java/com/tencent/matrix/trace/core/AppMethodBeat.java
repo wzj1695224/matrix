@@ -216,13 +216,11 @@ public class AppMethodBeat implements BeatLifecycle {
         isPauseUpdateTime = true;
     }
 
+
     /**
      * hook method when it's called in.
-     *
-     * @param methodId
      */
     public static void i(int methodId) {
-
         if (status <= STATUS_STOPPED) {
             return;
         }
@@ -254,17 +252,16 @@ public class AppMethodBeat implements BeatLifecycle {
                 mergeData(methodId, sIndex, true);
             } else {
                 sIndex = 0;
-                 mergeData(methodId, sIndex, true);
+                mergeData(methodId, sIndex, true);
             }
             ++sIndex;
             assertIn = false;
         }
     }
 
+
     /**
      * hook method when it's called out.
-     *
-     * @param methodId
      */
     public static void o(int methodId) {
         if (status <= STATUS_STOPPED) {
@@ -284,10 +281,11 @@ public class AppMethodBeat implements BeatLifecycle {
         }
     }
 
+
     /**
-     * when the special method calls,it's will be called.
-     *
-     * called after {@link #i(int)}
+     * when the special method calls, it's will be called. <br>
+     * called after {@link #i(int)} <br>
+     * called when Activity.onWindowFocusChanged(...)
      *
      * @param activity now at which activity
      * @param isFocus  this window if has focus
@@ -314,12 +312,9 @@ public class AppMethodBeat implements BeatLifecycle {
         return AppActiveMatrixDelegate.INSTANCE.getVisibleScene();
     }
 
+
     /**
      * merge trace info as a long data
-     *
-     * @param methodId
-     * @param index
-     * @param isIn
      */
     private static void mergeData(int methodId, int index, boolean isIn) {
         if (methodId == AppMethodBeat.METHOD_ID_DISPATCH) {
@@ -340,6 +335,7 @@ public class AppMethodBeat implements BeatLifecycle {
             MatrixLog.e(TAG, t.getMessage());
         }
     }
+
 
     public void addListener(IAppMethodBeatListener listener) {
         synchronized (listeners) {

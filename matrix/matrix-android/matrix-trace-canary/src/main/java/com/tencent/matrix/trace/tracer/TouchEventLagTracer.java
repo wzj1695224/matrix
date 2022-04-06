@@ -19,8 +19,10 @@ import com.tencent.matrix.util.MatrixLog;
 
 import org.json.JSONObject;
 
+
 public class TouchEventLagTracer extends Tracer {
     private static final String TAG = "Matrix.TouchEventLagTracer";
+
     private static TraceConfig traceConfig;
     private static long lastLagTime = 0;
     private static String currentLagFdStackTrace;
@@ -29,9 +31,18 @@ public class TouchEventLagTracer extends Tracer {
         System.loadLibrary("trace-canary");
     }
 
+
     public TouchEventLagTracer(TraceConfig config) {
         traceConfig = config;
     }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
 
     @Override
     public synchronized void onAlive() {
@@ -44,16 +55,25 @@ public class TouchEventLagTracer extends Tracer {
     @Override
     public void onDead() {
         super.onDead();
-
     }
 
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
     public static native void nativeInitTouchEventLagDetective(int lagThreshold);
+
+
+
 
     @Keep
     private static void onTouchEventLagDumpTrace(int fd) {
         MatrixLog.e(TAG, "onTouchEventLagDumpTrace, fd = " + fd);
         currentLagFdStackTrace = Utils.getMainThreadJavaStackTrace();
     }
+
     @Keep
     private static void onTouchEventLag(final int fd) {
         MatrixLog.e(TAG, "onTouchEventLag, fd = " + fd);

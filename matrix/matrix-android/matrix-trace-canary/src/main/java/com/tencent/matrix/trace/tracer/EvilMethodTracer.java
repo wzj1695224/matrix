@@ -41,14 +41,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class EvilMethodTracer extends Tracer {
 
+public class EvilMethodTracer extends Tracer {
     private static final String TAG = "Matrix.EvilMethodTracer";
+
     private final TraceConfig config;
     private AppMethodBeat.IndexRecord indexRecord;
     private long[] queueTypeCosts = new long[3];
     private long evilThresholdMs;
     private boolean isEvilMethodTraceEnable;
+
 
     public EvilMethodTracer(TraceConfig config) {
         this.config = config;
@@ -56,13 +58,20 @@ public class EvilMethodTracer extends Tracer {
         this.isEvilMethodTraceEnable = config.isEvilMethodTraceEnable();
     }
 
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
+
     @Override
     public void onAlive() {
         super.onAlive();
         if (isEvilMethodTraceEnable) {
             UIThreadMonitor.getMonitor().addObserver(this);
         }
-
     }
 
     @Override
@@ -73,13 +82,24 @@ public class EvilMethodTracer extends Tracer {
         }
     }
 
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    LooperObserver
+    //
 
     @Override
     public void dispatchBegin(long beginNs, long cpuBeginMs, long token) {
         super.dispatchBegin(beginNs, cpuBeginMs, token);
         indexRecord = AppMethodBeat.getInstance().maskIndex("EvilMethodTracer#dispatchBegin");
     }
-
 
     @Override
     public void doFrame(String focusedActivity, long startNs, long endNs, boolean isVsyncFrame, long intendedFrameTimeNs, long inputCostNs, long animationCostNs, long traversalCostNs) {
@@ -111,9 +131,18 @@ public class EvilMethodTracer extends Tracer {
         }
     }
 
+    //
+    //    LooperObserver
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
     public void modifyEvilThresholdMs(long evilThresholdMs) {
         this.evilThresholdMs = evilThresholdMs;
     }
+
 
     private class AnalyseTask implements Runnable {
         long[] queueCost;
@@ -135,7 +164,6 @@ public class EvilMethodTracer extends Tracer {
         }
 
         void analyse() {
-
             // process
             int[] processStat = Utils.getProcessPriority(Process.myPid());
             String usage = Utils.calculateCpuUsage(cpuCost, cost);
@@ -228,6 +256,7 @@ public class EvilMethodTracer extends Tracer {
             print.append("=========================================================================");
             return print.toString();
         }
+
     }
 
 }

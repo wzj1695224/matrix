@@ -5,6 +5,8 @@
     android:background="@android:color/transparent"
     android:orientation="vertical">
 
+
+	<!-- logo -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -26,10 +28,10 @@
             android:textColor="@color/dark_text"
             android:textSize="8dp"
             android:textStyle="bold" />
-
-
     </LinearLayout>
 
+
+	<!--  -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -67,6 +69,8 @@
 
     </LinearLayout>
 
+
+	<!--  -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -76,6 +80,8 @@
         android:textColor="@color/dark_text"
         android:textSize="8dp" />
 
+
+	<!--  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -132,6 +138,8 @@
             android:textSize="8dp" />
     </LinearLayout>
 
+
+	<!--  -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -141,6 +149,8 @@
         android:id="@+id/qi_wang_tv"
         android:textSize="8dp" />
 
+
+	<!--  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -197,6 +207,8 @@
             android:textSize="8dp" />
     </LinearLayout>
 
+
+	<!--  -->
     <view
         android:id="@+id/chart"
         class="com.tencent.matrix.trace.view.FloatFrameView$LineChartView"

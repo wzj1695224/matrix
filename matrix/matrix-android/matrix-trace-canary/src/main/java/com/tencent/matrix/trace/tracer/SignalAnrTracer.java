@@ -50,6 +50,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.List;
 
+
 public class SignalAnrTracer extends Tracer {
     private static final String TAG = "SignalAnrTracer";
 
@@ -79,22 +80,6 @@ public class SignalAnrTracer extends Tracer {
         System.loadLibrary("trace-canary");
     }
 
-    @Override
-    protected void onAlive() {
-        super.onAlive();
-        if (!hasInit) {
-            nativeInitSignalAnrDetective(sAnrTraceFilePath, sPrintTraceFilePath);
-            AppForegroundUtil.INSTANCE.init();
-            hasInit = true;
-        }
-
-    }
-
-    @Override
-    protected void onDead() {
-        super.onDead();
-        nativeFreeSignalAnrDetective();
-    }
 
     public SignalAnrTracer(TraceConfig traceConfig) {
         hasInstance = true;
@@ -114,9 +99,43 @@ public class SignalAnrTracer extends Tracer {
         sApplication = application;
     }
 
+
     public void setSignalAnrDetectedListener(SignalAnrDetectedListener listener) {
         sSignalAnrDetectedListener = listener;
     }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
+
+    @Override
+    protected void onAlive() {
+        super.onAlive();
+        if (!hasInit) {
+            nativeInitSignalAnrDetective(sAnrTraceFilePath, sPrintTraceFilePath);
+            AppForegroundUtil.INSTANCE.init();
+            hasInit = true;
+        }
+
+    }
+
+    @Override
+    protected void onDead() {
+        super.onDead();
+        nativeFreeSignalAnrDetective();
+    }
+
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
 
     public static String readCgroup() {
         StringBuilder ret = new StringBuilder();

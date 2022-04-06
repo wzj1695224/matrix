@@ -29,14 +29,23 @@ import com.tencent.matrix.util.MatrixLog;
 
 import org.json.JSONObject;
 
-public class ThreadPriorityTracer extends Tracer {
 
+public class ThreadPriorityTracer extends Tracer {
     private static final String TAG = "ThreadPriorityTracer";
+
     private static MainThreadPriorityModifiedListener sMainThreadPriorityModifiedListener;
 
     static {
         System.loadLibrary("trace-canary");
     }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
 
     @Override
     protected void onAlive() {
@@ -49,11 +58,21 @@ public class ThreadPriorityTracer extends Tracer {
         super.onDead();
     }
 
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+    private static native void nativeInitMainThreadPriorityDetective();
+
+
+
+
     public void setMainThreadPriorityModifiedListener(MainThreadPriorityModifiedListener mainThreadPriorityModifiedListener) {
         this.sMainThreadPriorityModifiedListener = mainThreadPriorityModifiedListener;
     }
 
-    private static native void nativeInitMainThreadPriorityDetective();
 
     @Keep
     private static void onMainThreadPriorityModified(int priorityBefore, int priorityAfter) {

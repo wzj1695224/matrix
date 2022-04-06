@@ -57,8 +57,8 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
     private static long recentMCount = 0;
     private static long recentMDuration = 0;
 
-    public abstract static class LooperDispatchListener {
 
+    public abstract static class LooperDispatchListener {
         boolean isHasDispatchStart = false;
         boolean historyMsgRecorder = false;
         boolean denseMsgTracer = false;
@@ -97,6 +97,7 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
         public void dispatchEnd() {
         }
     }
+
 
     public static LooperMonitor of(@NonNull Looper looper) {
         LooperMonitor looperMonitor = sLooperMonitorMap.get(looper);
@@ -266,9 +267,9 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
             if (isValid) {
                 dispatch(x.charAt(0) == '>', x);
             }
-
         }
     }
+
 
     private static void recordMsg(final String log, final long duration, boolean denseMsgTracer) {
         historyMsgHandler.post(new Runnable() {

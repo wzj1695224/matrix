@@ -57,9 +57,11 @@ public class ActivityThreadHacker {
         }
     }
 
+
     public interface IApplicationCreateListener {
         void onApplicationCreateEnd();
     }
+
 
     public static void hackSysHandlerCallback() {
         try {
@@ -176,8 +178,7 @@ public class ActivityThreadHacker {
                     MatrixLog.i(TAG, "Fix SP ANR sPendingWorkFinishers.clear successful");
                 }
             } catch (ClassNotFoundException e) {
-                MatrixLog.e(TAG,
-                        "Fix SP ANR ClassNotFoundException = " + e.getMessage());
+                MatrixLog.e(TAG, "Fix SP ANR ClassNotFoundException = " + e.getMessage());
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
                 MatrixLog.e(TAG, "Fix SP ANR IllegalAccessException =" + e.getMessage());

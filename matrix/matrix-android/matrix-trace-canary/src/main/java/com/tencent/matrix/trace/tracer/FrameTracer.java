@@ -25,6 +25,7 @@ import android.os.SystemClock;
 import android.view.FrameMetrics;
 import android.view.Window;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.tencent.matrix.AppActiveMatrixDelegate;
@@ -51,9 +52,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
-public class FrameTracer extends Tracer implements Application.ActivityLifecycleCallbacks {
 
+public class FrameTracer extends Tracer implements Application.ActivityLifecycleCallbacks {
     private static final String TAG = "Matrix.FrameTracer";
+
     private static boolean useFrameMetrics;
     private final HashSet<IDoFrameListener> listeners = new HashSet<>();
     private DropFrameListener dropFrameListener;
@@ -72,6 +74,7 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
     private Map<String, Long> lastResumeTimeMap = new HashMap<>();
     private Map<Integer, Window.OnFrameMetricsAvailableListener> frameListenerMap = new HashMap<>();
 
+
     public FrameTracer(TraceConfig config, boolean supportFrameMetrics) {
         useFrameMetrics = supportFrameMetrics;
         this.config = config;
@@ -89,6 +92,7 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         }
     }
 
+
     public void addListener(IDoFrameListener listener) {
         synchronized (listeners) {
             listeners.add(listener);
@@ -100,6 +104,23 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
             listeners.remove(listener);
         }
     }
+
+
+    public int getDroppedSum() {
+        return droppedSum;
+    }
+
+    public long getDurationSum() {
+        return durationSum;
+    }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
 
     @Override
     public void onAlive() {
@@ -122,6 +143,19 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         }
     }
 
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    LooperObserver
+    //
+
     @Override
     public void doFrame(String focusedActivity, long startNs, long endNs, boolean isVsyncFrame, long intendedFrameTimeNs, long inputCostNs, long animationCostNs, long traversalCostNs) {
         if (isForeground()) {
@@ -129,13 +163,11 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         }
     }
 
-    public int getDroppedSum() {
-        return droppedSum;
-    }
+    //
+    //    LooperObserver
+    //
+    /////////////////////////////////////////////////////////////////////////////////
 
-    public long getDurationSum() {
-        return durationSum;
-    }
 
     private void notifyListener(final String focusedActivity, final long startNs, final long endNs, final boolean isVsyncFrame,
                                 final long intendedFrameTimeNs, final long inputCostNs, final long animationCostNs, final long traversalCostNs) {
@@ -250,6 +282,7 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         }
     }
 
+
     private class FrameCollectItem {
         String visibleScene;
         long sumFrameCost;
@@ -342,6 +375,7 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         }
     }
 
+
     public enum DropStatus {
         DROPPED_FROZEN(4), DROPPED_HIGH(3), DROPPED_MIDDLE(2), DROPPED_NORMAL(1), DROPPED_BEST(0);
         public int index;
@@ -349,8 +383,8 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         DropStatus(int index) {
             this.index = index;
         }
-
     }
+
 
     public void addDropFrameListener(int dropFrameListenerThreshold, DropFrameListener dropFrameListener) {
         this.dropFrameListener = dropFrameListener;
@@ -365,9 +399,17 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
         void dropFrame(int droppedFrame, long jitter, String scene, long lastResumeTime);
     }
 
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    ActivityLifecycleCallbacks
+    //
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    public void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
+    public void onActivityCreated(@NonNull Activity activity, Bundle savedInstanceState) {
         if (useFrameMetrics) {
             this.refreshRate = (int) activity.getWindowManager().getDefaultDisplay().getRefreshRate();
             this.frameIntervalNs = Constants.TIME_SECOND_TO_NANO / (long) refreshRate;
@@ -389,7 +431,7 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
+    public void onActivityStarted(@NonNull Activity activity) {
 
     }
 
@@ -399,23 +441,23 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
     }
 
     @Override
-    public void onActivityPaused(Activity activity) {
+    public void onActivityPaused(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivityStopped(Activity activity) {
+    public void onActivityStopped(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+    public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
 
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    public void onActivityDestroyed(Activity activity) {
+    public void onActivityDestroyed(@NonNull Activity activity) {
         if (useFrameMetrics) {
             try {
                 activity.getWindow().removeOnFrameMetricsAvailableListener(frameListenerMap.remove(activity.hashCode()));
@@ -424,4 +466,10 @@ public class FrameTracer extends Tracer implements Application.ActivityLifecycle
             }
         }
     }
+
+    //
+    //    ActivityLifecycleCallbacks
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
 }

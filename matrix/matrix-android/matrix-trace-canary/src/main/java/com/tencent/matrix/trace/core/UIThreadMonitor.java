@@ -33,15 +33,17 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 
-public class UIThreadMonitor implements BeatLifecycle, Runnable {
 
+public class UIThreadMonitor implements BeatLifecycle, Runnable {
     private static final String TAG = "Matrix.UIThreadMonitor";
+
     private static final String ADD_CALLBACK = "addCallbackLocked";
     private volatile boolean isAlive = false;
     private long[] dispatchTimeMs = new long[4];
     private final HashSet<LooperObserver> observers = new HashSet<>();
     private volatile long token = 0L;
     private boolean isVsyncFrame = false;
+
     // The time of the oldest input event
     private static final int OLDEST_INPUT_EVENT = 3;
 
@@ -50,23 +52,17 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
 
     /**
      * Callback type: Input callback.  Runs first.
-     *
-     * @hide
      */
     public static final int CALLBACK_INPUT = 0;
 
     /**
      * Callback type: Animation callback.  Runs before traversals.
-     *
-     * @hide
      */
     public static final int CALLBACK_ANIMATION = 1;
 
     /**
      * Callback type: Commit callback.  Handles post-draw operations for the frame.
      * Runs after traversal completes.
-     *
-     * @hide
      */
     public static final int CALLBACK_TRAVERSAL = 2;
 
@@ -96,6 +92,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
     private static final int DO_QUEUE_END = 2;
     private boolean isInit = false;
 
+
     public static UIThreadMonitor getMonitor() {
         return sInstance;
     }
@@ -103,6 +100,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
     public boolean isInit() {
         return isInit;
     }
+
 
     public void init(TraceConfig config, boolean supportFrameMetrics) {
         this.config = config;
@@ -132,10 +130,11 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
                 super.dispatchEnd();
                 UIThreadMonitor.this.dispatchEnd();
             }
-
         });
+
         this.isInit = true;
         frameIntervalNanos = ReflectUtils.reflectObject(choreographer, "mFrameIntervalNanos", Constants.DEFAULT_FRAME_DURATION);
+
         if (!useFrameMetrics) {
             choreographer = Choreographer.getInstance();
             callbackQueueLock = ReflectUtils.reflectObject(choreographer, "mLock", new Object());
@@ -161,6 +160,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
             }
         }
     }
+
 
     private synchronized void addFrameCallback(int type, Runnable callback, boolean isAddHeader) {
         if (callbackExist[type]) {
@@ -196,9 +196,11 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     public long getFrameIntervalNanos() {
         return frameIntervalNanos;
     }
+
 
     public void addObserver(LooperObserver observer) {
         if (!isAlive) {
@@ -218,6 +220,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     private void dispatchBegin() {
         token = dispatchTimeMs[0] = System.nanoTime();
         dispatchTimeMs[2] = SystemClock.currentThreadTimeMillis();
@@ -236,12 +239,12 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     private void doFrameBegin(long token) {
         this.isVsyncFrame = true;
     }
 
     private void doFrameEnd(long token) {
-
         doQueueEnd(CALLBACK_TRAVERSAL);
 
         for (int i : queueStatus) {
@@ -255,8 +258,8 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         queueStatus = new int[CALLBACK_LAST + 1];
 
         addFrameCallback(CALLBACK_INPUT, this, true);
-
     }
+
 
     private void dispatchEnd() {
         long traceBegin = 0;
@@ -305,6 +308,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     private void doQueueBegin(int type) {
         queueStatus[type] = DO_QUEUE_BEGIN;
         queueCost[type] = System.nanoTime();
@@ -317,6 +321,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
             callbackExist[type] = false;
         }
     }
+
 
     @Override
     public synchronized void onStart() {
@@ -338,6 +343,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     @Override
     public void run() {
         final long start = System.nanoTime();
@@ -346,7 +352,6 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
             doQueueBegin(CALLBACK_INPUT);
 
             addFrameCallback(CALLBACK_ANIMATION, new Runnable() {
-
                 @Override
                 public void run() {
                     doQueueEnd(CALLBACK_INPUT);
@@ -355,7 +360,6 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
             }, true);
 
             addFrameCallback(CALLBACK_TRAVERSAL, new Runnable() {
-
                 @Override
                 public void run() {
                     doQueueEnd(CALLBACK_ANIMATION);
@@ -383,10 +387,12 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         }
     }
 
+
     @Override
     public boolean isAlive() {
         return isAlive;
     }
+
 
     private long getIntendedFrameTimeNs(long defaultValue) {
         try {

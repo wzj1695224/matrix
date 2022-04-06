@@ -23,20 +23,21 @@ import com.tencent.matrix.trace.listeners.LooperObserver;
 import com.tencent.matrix.util.MatrixLog;
 
 public abstract class Tracer extends LooperObserver implements ITracer {
+    private static final String TAG = "Matrix.Tracer";
 
     private volatile boolean isAlive = false;
-    private static final String TAG = "Matrix.Tracer";
+
 
     @CallSuper
     protected void onAlive() {
         MatrixLog.i(TAG, "[onAlive] %s", this.getClass().getName());
-
     }
 
     @CallSuper
     protected void onDead() {
         MatrixLog.i(TAG, "[onDead] %s", this.getClass().getName());
     }
+
 
     @Override
     final synchronized public void onStartTrace() {
@@ -54,10 +55,12 @@ public abstract class Tracer extends LooperObserver implements ITracer {
         }
     }
 
+
     @Override
     public void onForeground(boolean isForeground) {
 
     }
+
 
     @Override
     public boolean isAlive() {
@@ -67,4 +70,5 @@ public abstract class Tracer extends LooperObserver implements ITracer {
     public boolean isForeground() {
         return AppActiveMatrixDelegate.INSTANCE.isAppForeground();
     }
+
 }

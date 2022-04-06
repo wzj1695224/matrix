@@ -49,9 +49,12 @@ import java.util.Set;
 
 import static android.os.SystemClock.uptimeMillis;
 
+import androidx.annotation.NonNull;
+
+
 /**
  * Created by caichongyang on 2019/3/04.
- * <p>
+ * <pre>
  * firstMethod.i       LAUNCH_ACTIVITY   onWindowFocusChange   LAUNCH_ACTIVITY    onWindowFocusChange
  * ^                         ^                   ^                     ^                  ^
  * |                         |                   |                     |                  |
@@ -61,12 +64,11 @@ import static android.os.SystemClock.uptimeMillis;
  * |<---------------------------------------coldCost------------------------------------->|
  * .                         |<-----warmCost---->|
  *
- * </p>
+ * </pre>
  */
-
 public class StartupTracer extends Tracer implements IAppMethodBeatListener, ActivityThreadHacker.IApplicationCreateListener, Application.ActivityLifecycleCallbacks {
-
     private static final String TAG = "Matrix.StartupTracer";
+
     private final TraceConfig config;
     private long firstScreenCost = 0;
     private long coldCost = 0;
@@ -90,6 +92,14 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
         ActivityThreadHacker.addListener(this);
     }
 
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    Tracer
+    //
+
     @Override
     protected void onAlive() {
         super.onAlive();
@@ -110,13 +120,44 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
     }
 
     @Override
-    public void onApplicationCreateEnd() {
-        if (!isHasActivity) {
-            long applicationCost = ActivityThreadHacker.getApplicationCost();
-            MatrixLog.i(TAG, "onApplicationCreateEnd, applicationCost:%d", applicationCost);
-            analyse(applicationCost, 0, applicationCost, false);
+    public void onForeground(boolean isForeground) {
+        super.onForeground(isForeground);
+        if (!isForeground) {
+            checkActivityThread_mCallback();
         }
     }
+
+    //
+    //    Tracer
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+    private static void checkActivityThread_mCallback() {
+        try {
+            Class<?> forName = Class.forName("android.app.ActivityThread");
+            Field field = forName.getDeclaredField("sCurrentActivityThread");
+            field.setAccessible(true);
+            Object activityThreadValue = field.get(forName);
+            Field mH = forName.getDeclaredField("mH");
+            mH.setAccessible(true);
+            Object handler = mH.get(activityThreadValue);
+            Class<?> handlerClass = handler.getClass().getSuperclass();
+            Field callbackField = handlerClass.getDeclaredField("mCallback");
+            callbackField.setAccessible(true);
+            Handler.Callback currentCallback = (Handler.Callback) callbackField.get(handler);
+            MatrixLog.i(TAG, "callback %s", currentCallback);
+        } catch (Exception e) {
+        }
+    }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    IAppMethodBeatListener
+    //
 
     @Override
     public void onActivityFocused(Activity activity) {
@@ -189,6 +230,12 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
 
     }
 
+    //
+    //    IAppMethodBeatListener
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
     private boolean isColdStartup() {
         return coldCost == 0;
     }
@@ -196,6 +243,7 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
     private boolean isWarmStartUp() {
         return isWarmStartUp;
     }
+
 
     private void analyse(long applicationCost, long firstScreenCost, long allCost, boolean isWarmStartUp) {
         MatrixLog.i(TAG, "[report] applicationCost:%s firstScreenCost:%s allCost:%s isWarmStartUp:%s, createScene:%d",
@@ -211,11 +259,10 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
         }
 
         MatrixHandlerThread.getDefaultHandler().post(new AnalyseTask(data, applicationCost, firstScreenCost, allCost, isWarmStartUp, ActivityThreadHacker.sApplicationCreateScene));
-
     }
 
-    private class AnalyseTask implements Runnable {
 
+    private class AnalyseTask implements Runnable {
         long[] data;
         long applicationCost;
         long firstScreenCost;
@@ -276,6 +323,7 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
             report(applicationCost, firstScreenCost, reportBuilder, stackKey, stackCost, isWarmStartUp, scene);
         }
 
+
         private void report(long applicationCost, long firstScreenCost, StringBuilder reportBuilder, String stackKey,
                             long allCost, boolean isWarmStartUp, int scene) {
 
@@ -291,6 +339,7 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
                 costObject.put(SharePluginInfo.STAGE_FIRST_ACTIVITY_CREATE, firstScreenCost);
                 costObject.put(SharePluginInfo.STAGE_STARTUP_DURATION, allCost);
                 costObject.put(SharePluginInfo.ISSUE_IS_WARM_START_UP, isWarmStartUp);
+
                 Issue issue = new Issue();
                 issue.setTag(SharePluginInfo.TAG_PLUGIN_STARTUP);
                 issue.setContent(costObject);
@@ -311,11 +360,11 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
                     jsonObject.put(SharePluginInfo.ISSUE_TRACE_STACK, reportBuilder.toString());
                     jsonObject.put(SharePluginInfo.ISSUE_STACK_KEY, stackKey);
                     jsonObject.put(SharePluginInfo.ISSUE_SUB_TYPE, isWarmStartUp ? 2 : 1);
+
                     Issue issue = new Issue();
                     issue.setTag(SharePluginInfo.TAG_PLUGIN_EVIL_METHOD);
                     issue.setContent(jsonObject);
                     plugin.onDetectIssue(issue);
-
                 } catch (JSONException e) {
                     MatrixLog.e(TAG, "[JSONException error: %s", e);
                 }
@@ -323,12 +372,41 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
         }
     }
 
+
     private long lastCreateActivity = 0L;
     private HashMap<String, Long> createdTimeMap = new HashMap<>();
     private boolean isShouldRecordCreateTime = true;
 
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    IApplicationCreateListener
+    //
+
     @Override
-    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+    public void onApplicationCreateEnd() {
+        if (!isHasActivity) {
+            long applicationCost = ActivityThreadHacker.getApplicationCost();
+            MatrixLog.i(TAG, "onApplicationCreateEnd, applicationCost:%d", applicationCost);
+            analyse(applicationCost, 0, applicationCost, false);
+        }
+    }
+
+    //
+    //    IApplicationCreateListener
+    //
+    /////////////////////////////////////////////////////////////////////////////////
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    //
+    //    ActivityLifecycleCallbacks
+    //
+
+    @Override
+    public void onActivityCreated(@NonNull Activity activity, Bundle savedInstanceState) {
         MatrixLog.i(TAG, "activeActivityCount:%d, coldCost:%d", activeActivityCount, coldCost);
         if (activeActivityCount == 0 && coldCost > 0) {
             lastCreateActivity = uptimeMillis();
@@ -342,61 +420,40 @@ public class StartupTracer extends Tracer implements IAppMethodBeatListener, Act
     }
 
     @Override
-    public void onActivityDestroyed(Activity activity) {
+    public void onActivityDestroyed(@NonNull Activity activity) {
         MatrixLog.i(TAG, "activeActivityCount:%d", activeActivityCount);
         activeActivityCount--;
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
+    public void onActivityStarted(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public void onActivityResumed(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivityPaused(Activity activity) {
+    public void onActivityPaused(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivityStopped(Activity activity) {
+    public void onActivityStopped(@NonNull Activity activity) {
 
     }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+    public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
 
     }
 
-    @Override
-    public void onForeground(boolean isForeground) {
-        super.onForeground(isForeground);
-        if (!isForeground) {
-            checkActivityThread_mCallback();
-        }
-    }
+    //
+    //    ActivityLifecycleCallbacks
+    //
+    /////////////////////////////////////////////////////////////////////////////////
 
-    private static void checkActivityThread_mCallback() {
-        try {
-            Class<?> forName = Class.forName("android.app.ActivityThread");
-            Field field = forName.getDeclaredField("sCurrentActivityThread");
-            field.setAccessible(true);
-            Object activityThreadValue = field.get(forName);
-            Field mH = forName.getDeclaredField("mH");
-            mH.setAccessible(true);
-            Object handler = mH.get(activityThreadValue);
-            Class<?> handlerClass = handler.getClass().getSuperclass();
-            Field callbackField = handlerClass.getDeclaredField("mCallback");
-            callbackField.setAccessible(true);
-            Handler.Callback currentCallback = (Handler.Callback) callbackField.get(handler);
-            MatrixLog.i(TAG, "callback %s", currentCallback);
-
-        } catch (Exception e) {
-        }
-    }
 
 }
